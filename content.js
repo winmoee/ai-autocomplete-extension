@@ -1,18 +1,58 @@
 console.log('Content script loaded');
 
+// Debounce function to limit API calls
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+function sendToServer(text) {
+  console.log('Sending to server, text:', text);  // Debug log
+  fetch('http://localhost:5000/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text: text })
+  })
+  .then(response => {
+    console.log('Raw response from server:', response);  // Debug log
+    return response.json();
+  })
+  .then(data => {
+    console.log('Parsed response from server:', data);  // Debug log
+    // Send message to background script
+    chrome.runtime.sendMessage({
+      type: 'INPUT_ACTIVITY',
+      data: `Input analyzed: "${text}" - Response: ${JSON.stringify(data)}`
+    }, response => {
+      console.log('Background script response:', response);  // Debug log
+    });
+  })
+  .catch(error => {
+    console.error('Error in sendToServer:', error);  // More detailed error logging
+    console.error('Error stack:', error.stack);  // Stack trace
+  });
+}
+
+// Debounced version of sendToServer with 3 second delay
+const debouncedSendToServer = debounce(sendToServer, 3000);
+
 function logInputActivity(event) {
   const element = event.target;
-  const message = {
-    type: 'INPUT_ACTIVITY',
-    data: `Input detected in ${element.tagName.toLowerCase()}${element.id ? '#' + element.id : ''} - Text: "${event.target.value}"`
-  };
+  const text = event.target.value;
   
-  console.log('Content script sending message:', message);
+  console.log(`Input detected in ${element.tagName.toLowerCase()}${element.id ? '#' + element.id : ''}`);
   
-  // Send message to background script
-  chrome.runtime.sendMessage(message, response => {
-    console.log('Content script received response:', response);
-  });
+  // Send to server after debounce
+  debouncedSendToServer(text);
 }
 
 // Listen for input events on any input field or textarea

@@ -11,16 +11,26 @@ function addLogEntry(text, isDebug = false) {
 // Log that debug page is initialized
 addLogEntry('Debug page initialized', true);
 
-// Listen for messages from both content script and background
+// Establish connection with background script
+const port = chrome.runtime.connect({ name: 'debug_connection' });
+
+// Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Debug page received message:', message);
   
+  // Update your debug page UI here
   if (message.type === 'INPUT_ACTIVITY') {
-    statusElement.textContent = 'Receiving input events';
-    addLogEntry(message.data);
-    // Acknowledge receipt
-    sendResponse({received: true});
-    return true;
+    // Handle the message
+    const debugOutput = document.getElementById('debug-output');
+    if (debugOutput) {
+      const entry = document.createElement('div');
+      entry.textContent = message.data;
+      debugOutput.appendChild(entry);
+    }
   }
+  
+  // Send acknowledgment
+  sendResponse({ received: true });
+  return true;
 });
 
