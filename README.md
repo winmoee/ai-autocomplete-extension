@@ -1,10 +1,9 @@
-# Getting Started With Google Chrome Extensions (Hello World)
+# AI Chrome Extension
 
-This example demonstrates how to create a simple "Hello World" Chrome Extension.
-For more details, visit the [official tutorial](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world).
+This project uses AIXplain and input checking to suggest autocomplete powered by AI for users.
 
-## Running This Extension
+## Using This Extension
 
-1. Clone this repository.
-2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
-3. Click the extension icon in the Chrome toolbar, then select the "Hello Extensions" extension. A popup will appear displaying the text "Hello Extensions".
+- Debug console available for inputs
+- Uses flask server
+- Uses Python and AIxplain Framework to get access to various AI models, and agents in the future for workflows.
