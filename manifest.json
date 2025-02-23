@@ -5,7 +5,8 @@
   "description": "Detects and logs typing activity",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html"

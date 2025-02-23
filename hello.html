@@ -13,10 +13,15 @@
       overflow-y: auto;
       margin-top: 20px;
     }
+    .debug-info {
+      color: #666;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
   <h1>Input Activity Debug Log</h1>
+  <div>Status: <span id="status">Waiting for input events...</span></div>
   <div id="logContainer"></div>
   <script src="debug.js"></script>
 </body>
