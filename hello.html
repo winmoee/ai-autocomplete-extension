@@ -1,6 +1,23 @@
+<!DOCTYPE html>
 <html>
-  <body>
-    <h1>Hello Extensions</h1>
-    <script src="popup.js"></script>
-  </body>
+<head>
+  <title>Input Activity Debug</title>
+  <style>
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+    #logContainer {
+      max-height: 500px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Input Activity Debug Log</h1>
+  <div id="logContainer"></div>
+  <script src="debug.js"></script>
+</body>
 </html>

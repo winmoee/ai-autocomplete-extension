@@ -1,1 +1,6 @@
-console.log('This is a popup!');
+document.getElementById('openDebug').addEventListener('click', () => {
+    chrome.tabs.create({
+      url: 'hello.html'
+    });
+  });
+  
