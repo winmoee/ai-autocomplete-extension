@@ -9,13 +9,25 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Simple CORS configuration
+CORS(app)
 
 # Configure AIxplain
 model = ModelFactory.get("669a63646eb56306647e1091")
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze():
+    # Handle preflight request
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '3600'
+        }
+        return ('', 204, headers)
+
     logger.debug('Received request: %s', request)
     logger.debug('Request headers: %s', request.headers)
     
@@ -30,19 +42,19 @@ def analyze():
         response = model.run(text)
         logger.debug('AIxplain response: %s', response)
         
-        result = {
+        headers = {'Access-Control-Allow-Origin': '*'}
+        return jsonify({
             'success': True,
             'response': response
-        }
-        logger.debug('Sending response: %s', result)
-        return jsonify(result)
+        }), 200, headers
     
     except Exception as e:
         logger.error('Error processing request: %s', str(e), exc_info=True)
+        headers = {'Access-Control-Allow-Origin': '*'}
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500, headers
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True, host='0.0.0.0', port=5001) 
