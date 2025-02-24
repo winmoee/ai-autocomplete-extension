@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Input Activity Logger",
+  "name": "AI Suggestion Extension",
   "version": "1.0",
-  "description": "Detects and logs typing activity",
+  "description": "Detects and suggests AI completions based on typing activity",
   "permissions": [
     "activeTab",
     "scripting",

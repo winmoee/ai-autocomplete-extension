@@ -39,29 +39,93 @@ function showSuggestion(element, suggestion) {
     suggestionEl = document.createElement('div');
     suggestionEl.classList.add('ai-suggestion');
     suggestionEl.style.cssText = `
-      position: absolute;
+      position: fixed;
       background: #f0f0f0;
       border: 1px solid #ccc;
-      padding: 5px 10px;
+      padding: 8px 15px;  /* Increased padding */
       border-radius: 4px;
       color: #666;
-      font-size: 14px;
-      z-index: 9999;
-      margin-top: 5px;
+      font-size: 16px;  /* Increased font size */
+      z-index: 2147483647;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);  /* Enhanced shadow */
+      pointer-events: none;
+      min-width: 200px;  /* Minimum width */
+      max-width: 400px;  /* Maximum width */
+      backdrop-filter: blur(5px);  /* Slight blur effect */
+      background: rgba(240, 240, 240, 0.95);  /* Slightly transparent */
     `;
-    element.parentNode.insertBefore(suggestionEl, element.nextSibling);
+    document.body.appendChild(suggestionEl);
   }
 
   // Store the suggestion for tab completion
   element.dataset.suggestion = suggestion;
   
-  // Position below the input
+  // Position right below the input
   const rect = element.getBoundingClientRect();
-  suggestionEl.style.top = `${rect.bottom + 5}px`;
-  suggestionEl.style.left = `${rect.left}px`;
+  suggestionEl.style.top = `${rect.bottom + window.scrollY}px`;  // Removed gap
+  suggestionEl.style.left = `${rect.left + window.scrollX}px`;
   
   // Show the suggestion
   suggestionEl.textContent = `Press Tab to complete: ${suggestion}`;
+}
+
+function showLoadingIndicator(element) {
+  // Create or update loading element
+  let loadingEl = document.querySelector('.ai-suggestion.loading');
+  if (!loadingEl) {
+    loadingEl = document.createElement('div');
+    loadingEl.classList.add('ai-suggestion', 'loading');
+    loadingEl.style.cssText = `
+      position: fixed;
+      background: rgba(240, 240, 240, 0.95);
+      border: 1px solid #ccc;
+      padding: 8px 15px;  /* Increased padding */
+      border-radius: 4px;
+      color: #666;
+      font-size: 16px;  /* Increased font size */
+      z-index: 2147483647;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);  /* Enhanced shadow */
+      pointer-events: none;
+      min-width: 200px;  /* Minimum width */
+      backdrop-filter: blur(5px);  /* Slight blur effect */
+    `;
+    document.body.appendChild(loadingEl);
+  }
+
+  // Position right below the input
+  const rect = element.getBoundingClientRect();
+  loadingEl.style.top = `${rect.bottom + window.scrollY}px`;  // Removed gap
+  loadingEl.style.left = `${rect.left + window.scrollX}px`;
+  
+  // Show loading animation with larger text
+  loadingEl.innerHTML = `
+    <div style="display: flex; align-items: center;">
+      <div style="margin-right: 12px; font-weight: 500;">Thinking</div>
+      <div class="dots" style="font-size: 20px;">
+        <span>.</span><span>.</span><span>.</span>
+      </div>
+    </div>
+    <style>
+      .dots span {
+        animation: dots 1.5s infinite;
+        opacity: 0;
+      }
+      .dots span:nth-child(2) { animation-delay: 0.5s; }
+      .dots span:nth-child(3) { animation-delay: 1s; }
+      @keyframes dots {
+        0% { opacity: 0; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+    </style>
+  `;
+}
+
+function removeLoadingIndicator(element) {
+  const loadingEl = document.querySelector('.ai-suggestion.loading');
+  if (loadingEl) {
+    loadingEl.remove();
+  }
 }
 
 function sendToBackground(text, element) {
@@ -72,10 +136,14 @@ function sendToBackground(text, element) {
 
   console.log('Sending text to background:', text);
   try {
+    showLoadingIndicator(element);  // Show loading indicator
+    
     chrome.runtime.sendMessage({
       type: 'ANALYZE_TEXT',
       text: text
     }, response => {
+      removeLoadingIndicator(element);  // Remove loading indicator
+      
       if (chrome.runtime.lastError) {
         console.error('Chrome runtime error:', chrome.runtime.lastError);
         return;
@@ -91,6 +159,7 @@ function sendToBackground(text, element) {
     });
   } catch (error) {
     console.error('Error sending message to background:', error);
+    removeLoadingIndicator(element);  // Remove loading indicator on error
   }
 }
 
@@ -142,10 +211,47 @@ document.addEventListener('keydown', event => {
   }
 });
 
-// Listen for input events on any input field or textarea
-document.addEventListener('input', event => {
-  console.log('Input event detected:', event);
-  logInputActivity(event);
+// Function to attach input listeners to an element
+function attachInputListeners(element) {
+  if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+    console.log('Attaching listeners to:', element);
+    element.addEventListener('input', logInputActivity);
+  }
+}
+
+// Function to handle newly added nodes
+function handleAddedNodes(addedNodes) {
+  addedNodes.forEach(node => {
+    // Check if the node itself is an input/textarea
+    if (node.nodeType === 1) { // Element node
+      attachInputListeners(node);
+    }
+    
+    // Check child elements if it's a container
+    if (node.querySelectorAll) {
+      const inputs = node.querySelectorAll('input, textarea');
+      inputs.forEach(input => attachInputListeners(input));
+    }
+  });
+}
+
+// Create and start the MutationObserver
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach(mutation => {
+    if (mutation.addedNodes.length) {
+      handleAddedNodes(mutation.addedNodes);
+    }
+  });
 });
 
-console.log('Content script initialized');
+// Start observing the document with the configured parameters
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+// Initial scan for existing inputs
+const existingInputs = document.querySelectorAll('input, textarea');
+existingInputs.forEach(input => attachInputListeners(input));
+
+console.log('Content script initialized with MutationObserver');
