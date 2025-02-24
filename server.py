@@ -39,13 +39,24 @@ def analyze():
     
     try:
         logger.debug('Calling AIxplain model...')
-        response = model.run(text)
-        logger.debug('AIxplain response: %s', response)
+        response = model.run("You are an AI suggestion model to help complete the user's input. Please limit yourself to one sentence and put your suggested response in { } so that I can extract your output. User Input: " + text)
+        
+        # Extract the necessary data from ModelResponse
+        response_data = {
+            'data': str(response.data),
+            'status': response.status,
+            'completed': response.completed,
+            'runTime': response.run_time,
+            'usedCredits': response.used_credits,
+            'usage': response.usage
+        }
+        
+        logger.debug('Processed response: %s', response_data)
         
         headers = {'Access-Control-Allow-Origin': '*'}
         return jsonify({
             'success': True,
-            'response': response
+            'response': response_data
         }), 200, headers
     
     except Exception as e:
