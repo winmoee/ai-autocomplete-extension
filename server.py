@@ -39,7 +39,7 @@ def analyze():
     
     try:
         logger.debug('Calling AIxplain model...')
-        response = model.run("You are an AI suggestion model to help complete the user's input. Please limit yourself to one sentence and put your suggested response in { } so that I can extract your output. User Input: " + text)
+        response = model.run("You are an AI suggestion model to help complete the user's input (suggestions after the user has typed, include space if necessary). Please limit yourself to one sentence, make it brief and put your suggested response in { } so that I can extract your output. User Input: " + text)
         
         # Extract the necessary data from ModelResponse
         response_data = {
